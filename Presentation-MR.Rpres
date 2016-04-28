@@ -1,0 +1,135 @@
+Microrefugia-To Be or Not to Be
+========================================================
+author: Aji John
+date: 26th April 2016
+autosize: true
+
+Microrefugia
+========================================================
+ 
+For more details on authoring R presentations please visit <https://support.rstudio.com/hc/en-us/articles/200486468>.
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+Slide With Code
+========================================================
+
+```{r,echo=FALSE}
+#Packages
+library("ggplot2")
+
+
+load("/Users/ajijohn/git/climate/cr.RData")
+
+```
+
+Site Description
+========================================================
+
+```{r,echo=FALSE}
+#load the raster, sp, and rgdal packages
+library(raster)
+library(sp)
+library(rgdal)
+library(leaflet)
+library(jsonlite)
+#lat,long
+#38.579208	-122.700962
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=-122.700962, lat=38.579208, popup="Pepperwood Center")
+m
+# adding custom tiles - Topo
+m %>% addProviderTiles("Esri.WorldTopoMap")
+# OpenTopoMap
+m %>% addProviderTiles("OpenTopoMap")
+
+# Esri.WorldImagery
+#m %>% addProviderTiles("Esri.WorldImagery")
+
+#Esri.NatGeoWorldMap
+m %>% addProviderTiles("Esri.NatGeoWorldMap")
+
+#Stamen.Terrain
+m %>% addProviderTiles("Stamen.Terrain")
+
+# Temp
+#m %>% addProviderTiles("OpenWeatherMap.Temperature")
+
+#NASAGIBS.ModisTerraChlorophyll
+m %>% addProviderTiles("NASAGIBS.ModisTerraChlorophyll")
+
+# add regions
+geojson <- readLines("pw-regoins.json", warn = FALSE) %>%
+  paste(collapse = "\n") %>%
+  fromJSON(simplifyVector = FALSE)
+
+# Default styles for all features
+geojson$style = list(
+  weight = 1,
+  color = "#555555",
+  opacity = 1,
+  fillOpacity = 0.8
+)
+m %>% addGeoJSON(geojson)
+
+outline <- ClimatePlotPts[chull(ClimatePlotPts$longitude, ClimatePlotPts$latitude),]
+
+map <- leaflet(ClimatePlotPts) %>%
+  # Base groups
+  addTiles(group = "OSM (default)") %>%
+  addProviderTiles("Esri.WorldTopoMap", group = "Esri Topo") %>%
+  addProviderTiles("OpenTopoMap", group = "Open Topo") %>%
+  addWMSTiles(
+    "http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi",
+    layers = "nexrad-n0r-900913",
+    options = WMSTileOptions(format = "image/png", transparent = TRUE),
+    attribution = "Weather data © 2012 IEM Nexrad"
+    , group = "WMS") %>%
+  # Overlay groups
+  #addCircles(~Longitude, ~Latitude, ~10^1/5, stroke = F, group = "Quakes") %>%
+  addPolygons(data = outline, lng = ~longitude, lat = ~latitude,
+              fill = F, weight = 2, color = "#555555", group = "Outline") %>%
+  
+ # Layers control
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Esri Topo", "Open Topo","WMS"),
+    overlayGroups = c("Outline"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+map
+map%>% addCircleMarkers() %>%
+addMarkers(~longitude, ~latitude, popup = ~as.character(Plot))
+```
+
+
+Slide With Code
+========================================================
+
+Summary first:
+
+```{r,echo=FALSE}
+#Packages
+library("ggplot2")
+
+
+load("/Users/ajijohn/git/climate/cr.RData")
+
+```
+
+```{r,,echo=FALSE, out.width = '600px', out.height = '400px'}
+# To Use - Shows the Minimum temperature spread
+ggplot(data=minTemps, aes(x=MONTH, y=x, fill=site)) +
+    geom_bar(stat="identity", position=position_dodge()) + 
+ xlab("Month") + ylab("Minimum temperature(C)") + # Set axis labels
+    ggtitle("2014 Temperature Spread HOBO")
+
+```
+
+Slide With Plot
+========================================================
+
+```{r, echo=FALSE}
+plot(cars)
+```

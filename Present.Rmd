@@ -1,0 +1,214 @@
+---
+title: "Microrefugia-"
+author: "Aji John"
+date: "April 28, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,echo=FALSE, message=F, warning=F}
+#Packages
+library("ggplot2")
+load("/Users/ajijohn/git/climate/cr.RData")
+```
+
+## Site Description
+
+#Shows the location of the Hobos
+```{r,echo=FALSE, message=F, warning=F}
+#load the raster, sp, and rgdal packages
+library(raster)
+library(sp)
+library(rgdal)
+library(leaflet)
+library(jsonlite)
+#lat,long
+#38.579208	-122.700962
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=-122.700962, lat=38.579208, popup="Pepperwood Center")
+m
+# adding custom tiles - Topo
+m %>% addProviderTiles("Esri.WorldTopoMap")
+# OpenTopoMap
+m %>% addProviderTiles("OpenTopoMap")
+
+# Esri.WorldImagery
+#m %>% addProviderTiles("Esri.WorldImagery")
+
+#Esri.NatGeoWorldMap
+m %>% addProviderTiles("Esri.NatGeoWorldMap")
+
+#Stamen.Terrain
+m %>% addProviderTiles("Stamen.Terrain")
+
+# Temp
+#m %>% addProviderTiles("OpenWeatherMap.Temperature")
+
+#NASAGIBS.ModisTerraChlorophyll
+m %>% addProviderTiles("NASAGIBS.ModisTerraChlorophyll")
+
+# add regions
+geojson <- readLines("pw-regoins.json", warn = FALSE) %>%
+  paste(collapse = "\n") %>%
+  fromJSON(simplifyVector = FALSE)
+
+# Default styles for all features
+geojson$style = list(
+  weight = 1,
+  color = "#555555",
+  opacity = 1,
+  fillOpacity = 0.8
+)
+m %>% addGeoJSON(geojson)
+
+outline <- ClimatePlotPts[chull(ClimatePlotPts$longitude, ClimatePlotPts$latitude),]
+
+map <- leaflet(ClimatePlotPts) %>%
+  # Base groups
+  addTiles(group = "OSM (default)") %>%
+  addProviderTiles("Esri.WorldTopoMap", group = "Esri Topo") %>%
+  addProviderTiles("OpenTopoMap", group = "Open Topo") %>%
+  addWMSTiles(
+    "http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi",
+    layers = "nexrad-n0r-900913",
+    options = WMSTileOptions(format = "image/png", transparent = TRUE),
+    attribution = "Weather data © 2012 IEM Nexrad"
+    , group = "WMS") %>%
+  # Overlay groups
+  #addCircles(~Longitude, ~Latitude, ~10^1/5, stroke = F, group = "Quakes") %>%
+  addPolygons(data = outline, lng = ~longitude, lat = ~latitude,
+              fill = F, weight = 2, color = "#555555", group = "Outline") %>%
+  
+ # Layers control
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Esri Topo", "Open Topo","WMS"),
+    overlayGroups = c("Outline"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+map
+map%>% addCircleMarkers() %>%
+addMarkers(~longitude, ~latitude, popup = ~as.character(Plot))
+```
+
+## Decoupling with respect to Santa Rosa(SR) - Further South West of Pepperwood
+
+Santa Rosa is on a different elevation, much flatter terrain. To do a dry run, min/max of both the sites and the SR are compared with 'black' curve signifying the mean temperature of SR. 
+
+
+#Trimmed the data to match the matrix i.e. matching days not found wrt to the site - Santa Rosa
+```{r,echo=FALSE, message=F, warning=F}
+library(weathermetrics)
+library(R.oo)
+plotList <- list()
+plotList[]
+
+for (i in 1:50){
+ 
+  title = paste("Santa Rosa Matrix vs Hobo-" , hobo[i ,c("Plot")],sep="")
+  # Make plot name
+  pltName <- hobo[i ,c("Plot")]
+  tmpHobomax = daily.max[[i]]
+  tmpHobomin  = daily.min[[i]]
+  tmpHobomax$dt = as.Date(paste(tmpHobomax$MONTH,'/',tmpHobomax$DAY,'/','14',sep =''), "%m/%d/%y")
+  tmpHobomin$dt = as.Date(paste(tmpHobomin$MONTH,'/',tmpHobomin$DAY,'/','14',sep =''), "%m/%d/%y")
+  #filter the Matrix to match 
+  santarosa.2014.clean <- santarosa.qa.2014[match(tmpHobomax$dt,santarosa.qa.2014$date,),]
+  santarosa.2014.clean$mean <- fahrenheit.to.celsius(santarosa.2014.clean$mean)
+  santarosa.2014.clean$max <- fahrenheit.to.celsius(santarosa.2014.clean$max)
+  santarosa.2014.clean$min <- fahrenheit.to.celsius(santarosa.2014.clean$min)
+
+  tmpPlot = ggplot(data =santarosa.2014.clean, aes(x = date, y = mean)) +
+  geom_line() +
+  geom_line(mapping = aes(y = min),colour="green") +
+  geom_line(mapping = aes(y = max),colour="red") + 
+  geom_line(mapping = aes(y= tmpHobomin$x), colour="blue") + 
+  geom_line(mapping = aes(y = tmpHobomax$x), colour="orange") + 
+  ylab("Temp") + ggtitle(title)
+  
+ 
+  print(tmpPlot)     
+
+  plotList[[pltName]] = tmpPlot
+
+}
+
+```
+
+## Decoupling with respect to Windsor(WR)
+
+Windsor again is on a different elevation, much flatter terrain. To do a dry run, min/max of both the sites and the WR are compared with 'black' curve signifying the mean temperature of SR. 
+
+#Again, Trimmed the data to match the matrix i.e. matching days not found wrt to the site - Windsor.
+
+```{r,echo=FALSE, message=F, warning=F}
+library(weathermetrics)
+
+plotList <- list()
+plotList[]
+
+for (i in 1:50){
+ 
+  title = paste("Windsor Matrix vs Hobo-" , hobo[i ,c("Plot")],sep="")
+  # Make plot name
+  pltName <- hobo[i ,c("Plot")]
+  tmpHobomax = daily.max[[i]]
+  tmpHobomin  = daily.min[[i]]
+  tmpHobomax$dt = as.Date(paste(tmpHobomax$MONTH,'/',tmpHobomax$DAY,'/','14',sep =''), "%m/%d/%y")
+  tmpHobomin$dt = as.Date(paste(tmpHobomin$MONTH,'/',tmpHobomin$DAY,'/','14',sep =''), "%m/%d/%y")
+  #filter the Matrix to match 
+  windsor.2014.clean <- windsor.qa.2014[match(tmpHobomax$dt,windsor.qa.2014$date,),]
+  
+  tmpPlot = ggplot(data =windsor.2014.clean, aes(x = date, y = mean)) +
+  geom_line() +
+  geom_line(mapping = aes(y = min),colour="green") +
+  geom_line(mapping = aes(y = max),colour="red") + 
+  geom_line(mapping = aes(y= tmpHobomin$x), colour="blue") + 
+  geom_line(mapping = aes(y = tmpHobomax$x), colour="orange") + 
+  ylab("Temp") + ggtitle(title)
+  
+ 
+  print(tmpPlot)     
+
+  plotList[[pltName]] = tmpPlot
+
+}
+
+
+
+```
+
+## Minimum Temperature distribution across the sites.
+
+#To use - Stability of min temperatures across the sites
+#shows - very consistent minimum temperatures. Microrefugia sites tend to show stability, might be worthwhile to see it seasonally across years. We could see potentially increase in the minimum temperatures.
+
+```{r,echo=FALSE, message=F, warning=F}
+p1 <- ggplot(minTemps,aes(date,x,color=MONTH)) +
+geom_point(data=minTemps[!(minTemps[,"site"]==""),],size=I(2),alpha=I(0.6)) 
+
+pout <- p1 + facet_grid(. ~ site, scales = "free") +
+xlab(paste("2014","")) + theme(axis.ticks = element_blank(),axis.text.x = element_blank()) 
+#scale_color_manual(values=c("#666666", "#FF3300", "#0033FF" ))
+pout
+```
+
+#Looking at the frequency of min temps across sites (bin size = 3 assuming we could see an increase of 3 deg)
+
+```{r,echo=FALSE, message=F, warning=F}
+ggplot(minTemps, aes(x, fill = site)) +
+   geom_histogram(binwidth = 3)
+```
+
+## In Works
+
+# detail daily trends
+# elevation / slope / aspect study
+```{r, echo=FALSE, message=F, warning=F}
+
+```
+
+
