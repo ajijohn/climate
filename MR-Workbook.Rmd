@@ -1,0 +1,184 @@
+---
+title: "MR-Workbook"
+author: "Aji John"
+date: "June 28, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(googleVis)
+library(scatterplot3d)
+library(RColorBrewer)
+```
+
+Microrefugia Research - Workbook
+
+Work here is result of collaboration with Dr David Ackerly(http://www.ackerlylab.org) in field of Microrefugia(MR).
+
+The R-Markdown has been constructed for research and for tutoring purpose. The tutorial heavily uses dplyr and ggplot2. The premise of this research is to identify the microrefugia sites given an area of interst.
+
+```{r, echo=TRUE, message=F, warning=F}
+
+hoboHourly2014<- read.csv('HoboHourlyTemperatures2014.csv')
+str(hoboHourly2014)
+
+```
+
+Fixing the date
+
+```{r, echo=TRUE, message=F, warning=F}
+#Lets fix the date and rest
+hoboHourly2014$dt <- as.Date(hoboHourly2014$dt, "%Y-%m-%d")
+str(hoboHourly2014)
+```
+
+
+Doing some trend analysis, here what do we mean by trend ? One is yearly trend, ad many other ways of interpreting it - like seasonal trends. Having a time series data of this sort only begets more analysis or slicing or dicing.
+
+
+```{r, echo=TRUE, message=F, warning=F}
+#Lets fix the date and rest
+hoboHourly2014 %>% ggplot(aes(dt,x,color=site)) + geom_point() 
+```
+
+What we see is that the temperatures are very low in the begining of the year, around June-July, it peaks, and comes back exhibiting lows in Nov-Dec. We see almost a 40 degree yearly variation. It is a good metric, but we might find it useful only when doing Y2Y comparision, we should ofcourse document some metric on a yearly basis. But, before we proceed lets look at this graph, the color gradient has kind of mushed the variations between the sites.So, what seems to be the issue ? The issue is that the site we choose to do color on is a quantitative variable . Lets change it, and ttempt again
+
+```{r, echo=TRUE, message=F, warning=F}
+#Lets fix the site , i.e. make it a factor or character
+hoboHourly2014$site <- as.factor(hoboHourly2014$site)
+hoboHourly2014 %>% ggplot(aes(dt,x,color=site)) + geom_point() 
+```
+
+Slighlty better , but color is still overwheming. We do have one clear thing , 1310 site is exhibiting highest temperatures or is the warmest, do you concur? It also seem to be exhibiting some of the lowest temperatures, agree ?
+
+It is a concern with visualization when multiple sites are involved, although the data is inherently spatio-temporal. So how do we go about it ? Should we try alternative here ? Maybe if we see them side by side (compare and contrast )
+
+```{r, echo=TRUE, message=F, warning=F}
+hoboHourly2014 %>% ggplot(aes(dt,x,color=site)) + geom_point() + facet_wrap(~site)
+```
+
+Slighly better, but still crowded, lets just do spot check of two sites
+
+```{r, echo=TRUE, message=F, warning=F}
+#Lets fix the site , i.e. make it a factor or character
+hoboHourly2014 %>% filter(site %in% c('1302','1310','1344')) %>% ggplot(aes(dt,x,color=site)) + geom_point() + facet_wrap(~site)
+```
+
+So, wrap option is better, other useful ways to use be to see by month,but before doing that lets fix our ticks on x-axis, they are overlapping.
+
+```{r, echo=TRUE, message=F, warning=F}
+#Lets fix the site , i.e. make it a factor or character
+hoboHourly2014 %>% filter(site %in% c('1302','1310','1344')) %>% ggplot(aes(dt,x,color=site)) + geom_point() + facet_wrap(~site) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+As alluded earlier, seasonality is important, lets try to see the seasonality across the sites for summer
+```{r, echo=TRUE, message=F, warning=F}
+#Lets fix the site , i.e. make it a factor or character
+hoboHourly2014 %>% filter(MONTH %in% c(6,7,8)) %>% ggplot(aes(dt,x,color=MONTH)) + geom_point() + facet_wrap(~MONTH) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Same factor or character correction, lets do that try
+
+```{r, echo=TRUE, message=F, warning=F}
+#Lets fix the site , i.e. make it a factor or character
+hoboHourly2014$MONTH <- as.character(hoboHourly2014$MONTH)
+hoboHourly2014 %>% filter(MONTH %in% c('6','7','8')) %>% ggplot(aes(dt,x,color=MONTH)) + geom_point() + facet_wrap(~MONTH) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Better, and color does good demaraction, maybe can look at the entire span i.e. all the months
+```{r, echo=TRUE, message=F, warning=F}
+#Lets fix the site , i.e. make it a factor or character
+hoboHourly2014 %>% ggplot(aes(dt,x,color=MONTH)) + geom_point() + facet_wrap(~MONTH) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Ordering is important, and would convey the order of the months, one way is to change month to being quanitative.
+```{r, echo=TRUE, message=F, warning=F}
+#Lets fix the site , i.e. make it a factor or character
+hoboHourly2014$MONTH <- as.numeric(hoboHourly2014$MONTH)
+hoboHourly2014 %>%  ggplot(aes(dt,x,color=MONTH)) + geom_point() + facet_wrap(~MONTH) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Other  way is to change month to being a factor, and is good representation of the temperature ranges
+```{r, echo=TRUE, message=F, warning=F}
+#Lets fix the site , i.e. make it a factor or character
+hoboHourly2014$MONTH <- as.factor(hoboHourly2014$MONTH)
+hoboHourly2014 %>%  ggplot(aes(dt,x,color=MONTH)) + geom_point() + facet_wrap(~MONTH) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Lets next try to bring in seasonality. So, if we tag the rows to season. Lets look at mean hourly temperatures (ignoring site). 
+
+Note, we use ifelse(test, yes, no) to add the Season to our hourly mean rows
+```{r, echo=TRUE, message=F, warning=F}
+hoboHourly2014$MONTH <- as.character(hoboHourly2014$MONTH)
+hoboHourly2014 %>% group_by(MONTH,HR) %>% summarise(meanHrlyTemp = mean(x)) %>% as.data.frame() %>% mutate(season=ifelse((as.numeric(MONTH) %in% c(12, 1 ,2)),'Winter',ifelse((as.numeric(MONTH) %in% c(6, 7 ,8)),'Summer',ifelse((as.numeric(MONTH) %in% c(9, 10 ,11)),'Fall',ifelse((as.numeric(MONTH) %in% c(3, 4 ,5)),'Spring',NA))))) %>% ggplot(aes(season,meanHrlyTemp)) + geom_jitter(aes(colour=meanHrlyTemp), position = position_jitter(width = 0.5)) + scale_colour_gradient2(low = "blue", mid = "yellow",high = "red", midpoint = 15) + scale_y_continuous(breaks = seq(-5,35,5)) +
+xlab("Season") + ylab ("Mean Temp (Celsius)") + ggtitle("Mean Temperatures by season - 2014")
+
+```
+
+Mean temperatures has tendency to mask hidden features, lets try to see the min temperatures by season
+```{r, echo=TRUE, message=F, warning=F}
+hoboHourly2014$MONTH <- as.character(hoboHourly2014$MONTH)
+hoboHourly2014 %>% group_by(MONTH,HR) %>% summarise(minHrlyTemp = min(x),maxHrlyTemp = max(x)) %>% as.data.frame() %>% mutate(season=ifelse((as.numeric(MONTH) %in% c(12, 1 ,2)),'Winter',ifelse((as.numeric(MONTH) %in% c(6, 7 ,8)),'Summer',ifelse((as.numeric(MONTH) %in% c(9, 10 ,11)),'Fall',ifelse((as.numeric(MONTH) %in% c(3, 4 ,5)),'Spring',NA))))) %>% ggplot(aes(season,minHrlyTemp)) + geom_jitter(aes(colour=minHrlyTemp), position = position_jitter(width = 0.5)) + scale_colour_gradient2(low = "blue", mid = "yellow",high = "red", midpoint = 15) + scale_y_continuous(breaks = seq(-5,35,5)) +
+xlab("Season") + ylab ("Mean Temp (Celsius)") + ggtitle("Min Temperatures by season - 2014")
+
+```
+
+Max temperatures 
+```{r, echo=TRUE, message=F, warning=F}
+hoboHourly2014$MONTH <- as.character(hoboHourly2014$MONTH)
+hoboHourly2014 %>% group_by(MONTH,HR) %>% summarise(minHrlyTemp = min(x),maxHrlyTemp = max(x)) %>% as.data.frame() %>% mutate(season=ifelse((as.numeric(MONTH) %in% c(12, 1 ,2)),'Winter',ifelse((as.numeric(MONTH) %in% c(6, 7 ,8)),'Summer',ifelse((as.numeric(MONTH) %in% c(9, 10 ,11)),'Fall',ifelse((as.numeric(MONTH) %in% c(3, 4 ,5)),'Spring',NA))))) %>% ggplot(aes(season,maxHrlyTemp)) + geom_jitter(aes(colour=maxHrlyTemp), position = position_jitter(width = 0.5)) + scale_colour_gradient2(low = "blue", mid = "yellow",high = "red", midpoint = 15) + scale_y_continuous(breaks = seq(-5,40,5)) +
+xlab("Season") + ylab ("Max Temp (Celsius)") + ggtitle("Max Temperatures by season - 2014")
+
+```
+So, one essential point we tried to materialize by take out the sites. Here the whole region is taken, and 
+
+Good improvement would be to order the seasons, try it ?
+
+Next, lets look at temperature curves for each season, but by MONTH, DAY
+
+```{r, echo=TRUE, message=F, warning=F}
+hoboHourly2014 %>% group_by(MONTH,DAY,HR) %>%  as.data.frame() %>% mutate(season=ifelse((as.numeric(MONTH) %in% c(12, 1 ,2)),'Winter',ifelse((as.numeric(MONTH) %in% c(6, 7 ,8)),'Summer',ifelse((as.numeric(MONTH) %in% c(9, 10 ,11)),'Fall',ifelse((as.numeric(MONTH) %in% c(3, 4 ,5)),'Spring',NA))))) %>% ggplot(aes(HR,x)) +
+geom_point(colour = "red") +
+geom_smooth(size = 0.5, se = T) +
+facet_wrap(~season) +
+xlab("Hour") +
+ylab ("Mean hourly Temperature (C)") +
+ggtitle("Hr vs. HrlyTemp, by season - 2014")
+
+```
+
+Lets Analyse some hourly data
+```{r, echo=TRUE, message=F, warning=F}
+hoboHourly2014 %>% group_by(MONTH,DAY,HR) %>% 
+filter(site %in% c('1310'))  %>% 
+as.data.frame() %>% mutate(season=ifelse((as.numeric(MONTH) %in% c(12, 1 ,2)),'Winter',ifelse((as.numeric(MONTH) %in% c(6, 7 ,8)),'Summer',ifelse((as.numeric(MONTH) %in% c(9, 10 ,11)),'Fall',ifelse((as.numeric(MONTH) %in% c(3, 4 ,5)),'Spring',NA))))) %>% ggplot(aes(HR,x)) +
+geom_point(colour = "red") +
+geom_smooth(size = 0.5, se = T) +
+facet_wrap(~season) +
+xlab("Hour") +
+ylab ("Mean hourly Temperature (C)") +
+ggtitle("Hr vs. HrlyTemp, by season - 2014")
+
+```
+
+Lets shift gears, we want to see things spatially
+
+```{r, echo=TRUE, message=F, warning=F}
+
+ClimatePlotPts<- read.csv('ClimatePlotPts.csv')
+str(ClimatePlotPts)
+
+str(hoboHourly2014 %>% group_by(site,HR) %>% summarise(minHrlyTemp = min(x),maxHrlyTemp = max(x)) %>% as.data.frame() %>% mutate(siteN= as.character(site)) %>%group_by(siteN) %>% summarise(minSite=min(minHrlyTemp)))
+```
+
+#Visualizing median temperature with respect to location
+```{r, echo=FALSE, message=F, warning=F}
+
+
+```
+
+  
