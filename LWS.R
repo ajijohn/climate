@@ -26,7 +26,12 @@ LWS %>% filter(oak < 400) %>% ggplot(aes(TSFMT,oak)) + geom_line()
   
 
 # tag which one is dry/wet
-LWS %>% mutate(conditions=ifelse((oak < 262),'dry',ifelse((oak > 275),'wet')) )  %>% head()
+LWS %>% mutate(conditions=ifelse((oak < 262),'dry',ifelse((oak > 275),'wet','NA' )))  %>% head()
+
+library(scales) # to access breaks/formatting functions
+#lets plot the dry/wet
+LWS %>% mutate(conditions=ifelse((oak < 262),'dry',ifelse((oak > 275),'wet','NA' )))  %>% 
+  ggplot(aes(TSFMT,oak,color=factor(conditions))) + geom_line() 
 
 #closer but data might be reading as numeric rather than time stamps
 plot.ts(LWS$TS,LWS$oak)
