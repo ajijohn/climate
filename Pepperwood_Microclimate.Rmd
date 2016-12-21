@@ -47,4 +47,4 @@ pws %>%mutate(HR= format(tsfmt,"%H"),DATE=format(tsfmt,"%Y-%m-%d")) %>% group_by
 
 ```
 
-Now, lets create the daily file
+Now, lets create the daily file. We can follow the same, but now summarize by DATE
