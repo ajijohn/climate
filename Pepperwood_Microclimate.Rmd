@@ -32,9 +32,19 @@ head(pws)
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Lets try to do the summary by site, day for the 2013 data for RH and Temperature
 
 ```{echo=FALSE}
-pws %>% group_by(Plot,HR) %>% summarise(minHrlyTemp = min(x),maxHrlyTemp = max(x)) %>% as.data.frame() %>% mutate(siteN= as.character(site)) %>%group_by(siteN) %>% summarise(minSite=min(minHrlyTemp)))
+head(pws %>%mutate(HR= format(tsfmt,"%H"),DATE=format(tsfmt,"%Y-%m-%d")) %>% group_by(Plot,DATE,HR) %>% summarise(minHrlyTemp = min(Temp),maxHrlyTemp = max(Temp),minHrlyRH = min(RH),maxHrlyRH = max(RH)) %>% as.data.frame())
 
 ```
+
+Lets write to CSV
+
+```{echo=FALSE}
+
+pws %>%mutate(HR= format(tsfmt,"%H"),DATE=format(tsfmt,"%Y-%m-%d")) %>% group_by(Plot,DATE,HR) %>% summarise(minHrlyTemp = min(Temp),maxHrlyTemp = max(Temp),minHrlyRH = min(RH),maxHrlyRH = max(RH)) %>% as.data.frame() %>% write.csv("Hobo-2013-Summary-Hourly.csv")
+
+```
+
+Now, lets create the daily file
