@@ -1,0 +1,40 @@
+---
+title: "Pepperwood-Microclimate"
+author: "Aji John"
+date: "12/21/2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+```
+
+## R Markdown
+
+
+
+```{r}
+pws <-read.csv("https://raw.githubusercontent.com/CelesteDodge/PepperwoodVegPlots/master/HOBO/PPW_HOBO_2013_Master.csv")
+
+```
+
+## Check the imported columns
+
+You can also embed plots, for example:
+
+```{echo=FALSE}
+str(pws)
+head(pws)
+pws$tsfmt<- as.POSIXct(pws$Date.Time,format="%Y-%m-%d %H:%M:%S")
+head(pws)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{echo=FALSE}
+pws %>% group_by(Plot,HR) %>% summarise(minHrlyTemp = min(x),maxHrlyTemp = max(x)) %>% as.data.frame() %>% mutate(siteN= as.character(site)) %>%group_by(siteN) %>% summarise(minSite=min(minHrlyTemp)))
+
+```
